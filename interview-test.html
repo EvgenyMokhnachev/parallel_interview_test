@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head></head>
+<body>
+	<h1>Interview test</h1>
+	<p>You have to implement missing part of the application (`Parallel`) that making the code to be compiled and executed without exceptions and assertions in browser console.</p>
+
+	<script>
+		/*
+		* You have to implement missing part of the application that making code below (which untouchble)
+		* to be compiled and executed without exceptions and assertions.
+		*/
+
+		//PLACE YOUR CODE HERE
+
+		var Task = (function () {
+
+			function Task(func) {
+				this.func = func;
+				this.result = undefined;
+				this.done = false;
+				this.started = false;
+			}
+
+			Task.prototype.start = function () {
+				var self = this;
+				self.started = true;
+				setTimeout(this.func, 1, function (jobName) {
+					self.result = jobName;
+					self.done = true;
+				});
+			};
+
+			return Task;
+
+		})();
+
+		var Parallel = (function () {
+
+			function Parallel(conf) {
+				this.conf = {
+					ver: '1.0',
+					parallelJobs: 1
+				};
+				Object.assign(this.conf, conf);
+
+				this.tasks = [];
+			}
+
+			Parallel.prototype.job = function (func) {
+				this.tasks.push(new Task(func));
+				return this;
+			};
+
+			Parallel.prototype.done = function (doneFunc) {
+				var self = this;
+
+				var allTaskDone = true;
+				this.tasks.forEach(function (task) {
+					if (!task.done) allTaskDone = false;
+				});
+
+				this.tasks.forEach(function (task) {
+					if (!task.done && !task.started && self.workCount() < self.conf.parallelJobs) task.start();
+				});
+
+				if (allTaskDone) {
+					var results = [];
+					this.tasks.forEach(function (task) {
+						results.push(task.result);
+					});
+					doneFunc(results);
+				} else setTimeout(function () {
+					self.done(doneFunc);
+				}, 1);
+			};
+
+			Parallel.prototype.workCount = function () {
+				var workCount = 0;
+				this.tasks.forEach(function (task) {
+					if (!task.done && task.started) workCount++;
+				});
+				return workCount;
+			};
+
+			return Parallel;
+
+		})();
+	</script>
+
+	<script>
+	/************************************************
+	* Please don`t change the code bellow this line *
+	************************************************/
+	var runner = new Parallel({
+		parallelJobs: 2
+	});
+
+	runner.job(step1)
+		.job(step2)
+		.job(step3)
+		.job(step4)
+		.done(onDone);
+
+	function step1(done) {
+		console.log('step1');
+		setTimeout(done, 1000, 'hello world');
+	}
+
+	function step2(done) {
+		console.log('step2');
+		setTimeout(done, 1200, 'Job succeded');
+	}
+
+	function step3(done) {
+		console.log('step3');
+		setTimeout(done, 1500, 'step3');
+	}
+
+	function step4(done) {
+		console.log('step4');
+		setTimeout(done, 100, 'step4');
+	}
+
+	var isPassed = false;
+	function onDone(results) {
+		console.log('onDone', results);
+		console.assert(Array.isArray(results), 'expect result to be array');
+		console.assert(results[0] === 'hello world', 'Wrong answer 1');
+		console.assert(results[1] === 'Job succeded', 'Wrong answer 2');
+		console.assert(results[2] === 'step3', 'Wrong answer 3');
+		console.assert(results[3] === 'step4', 'Wrong answer 4');
+		console.log('Thanks, all works fine');
+		isPassed = true;
+	}
+
+	setTimeout(function(){
+		if(isPassed) return;
+		console.error('Test is not done.');
+	}, 3500);
+	</script>
+</body>
+</html>
